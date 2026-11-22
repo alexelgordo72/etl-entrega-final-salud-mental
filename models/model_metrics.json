@@ -1,0 +1,18 @@
+{
+  "umbral_casos_riesgo_alto": 2,
+  "train_rows": 11997,
+  "test_rows": 3667,
+  "accuracy": 0.5844,
+  "f1_score": 0.4557,
+  "roc_auc": 0.7401,
+  "features": [
+    "tasa_desempleo",
+    "total_festivos_anio",
+    "superficie_km2",
+    "poblacion_2018",
+    "altitud_msnm",
+    "departamento",
+    "zona_hecho",
+    "mes"
+  ]
+}

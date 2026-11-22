@@ -1,14 +1,10 @@
 import sys
-import os
-
-# carpeta raíz de Airflow dentro del contenedor
 sys.path.insert(0, '/opt/airflow')
 
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-# importar funciones de extracción, transformación, validación y carga
 from scripts.extract_sources import (
     extract_api_worldbank,
     extract_api_holidays,
@@ -19,6 +15,7 @@ from scripts.extract_sources import (
 from scripts.transform_merge import transform_and_merge
 from scripts.validate_ge import validate_data_quality
 from scripts.load_dw import load_data_warehouse
+from scripts.kafka_producer import publish_events_to_kafka
 
 default_args = {
     'owner': 'alexander_jheffrey',
@@ -29,11 +26,11 @@ default_args = {
 with DAG(
     dag_id='etl_suicidios_valle_v2',
     default_args=default_args,
-    description='Pipeline ETL Segunda Entrega con Cuarentena de Datos',
+    description='Pipeline ETL + ML Streaming (Entrega Final)',
     start_date=datetime(2024, 1, 1),
     schedule_interval='@daily',
     catchup=False,
-    tags=['etl', 'entrega2', 'salud_mental']
+    tags=['etl', 'entrega_final', 'kafka', 'ml', 'salud_mental']
 ) as dag:
 
     t_ext_wb = PythonOperator(task_id='extract_api_worldbank', python_callable=extract_api_worldbank)
@@ -45,6 +42,6 @@ with DAG(
     t_transform = PythonOperator(task_id='transform_and_merge', python_callable=transform_and_merge)
     t_validate = PythonOperator(task_id='validate_data_quality', python_callable=validate_data_quality)
     t_load = PythonOperator(task_id='load_data_warehouse', python_callable=load_data_warehouse)
+    t_kafka = PythonOperator(task_id='publish_to_kafka', python_callable=publish_events_to_kafka)
 
-    # Orden de dependencias
-    [t_ext_wb, t_ext_hol, t_ext_web, t_ext_gcs, t_ext_db] >> t_transform >> t_validate >> t_load
+    [t_ext_wb, t_ext_hol, t_ext_web, t_ext_gcs, t_ext_db] >> t_transform >> t_validate >> t_load >> t_kafka
